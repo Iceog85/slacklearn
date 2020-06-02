@@ -1,9 +1,29 @@
-const express = require('express')
-const app = express()
-const port = 28410
+require('dotenv').config();
+const { App } = require('@slack/bolt');
 
-app.get('/', (req, res) => res.send('Hello World!!!!!'))
+const bot = new App({
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  token: process.env.SLACK_BOT_TOKEN,
+});
 
-app.listen(port, () => console.log(`Example app listening at http://localhost:${port}`))
+(async () => {
+  // Start the app
+  await bot.start(process.env.PORT || 28410);
 
+  console.log(' Bolt app is running!');
+})();
 
+bot.event("app_mention", async ({ context, event }) => {
+
+    try{
+      await bot.client.chat.postMessage({
+      token: context.botToken,
+      channel: event.channel,
+      text: `Hey yoo <@${event.user}> you mentioned me`
+    });
+    }
+    catch (e) {
+      console.log(`error responding ${e}`);
+    }
+  
+  });
