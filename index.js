@@ -29,17 +29,12 @@ slackEvents.on('app_mention', (event) => {
 slackEvents.on('message', (message, body) => {
   // Only deal with messages that have no subtype (plain messages) and contain 'hi'
   if (!message.subtype && message.text.indexOf('hi') >= 0) {
-    // Initialize a client
-    const slack = getClientByTeamId(body.team_id);
-    // Handle initialization failure
-    if (!slack) {
-      return console.error('No authorization found for this team. Did you install the app through the url provided by ngrok?');
-    }
+
 
     (async () => {
       try {
         // Respond to the message back in the same channel
-        const response = await slack.chat.postMessage({ channel: message.channel, text: `Hello <@${message.user}>! :tada:` });
+        const response = await chat.postMessage({ channel: message.channel, text: `Hello <@${message.user}>! :tada:` });
       } catch (error) {
         console.log(error.data);
       }
