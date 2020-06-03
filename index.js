@@ -3,6 +3,7 @@ const express = require('express');
 const request = require('request');
 const bodyParser = require('body-parser');
 const app = express();
+const port = process.env.PORT;
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 app.post('/slack/commands/send-me-buttons', urlencodedParser, (req, res) =>{
   res.status(200).end() // best practice to respond with empty 200 status code
@@ -77,3 +78,4 @@ function sendMessageToSlackResponseURL(responseURL, JSONmessage){
   })
 }
 
+app.listen(port, () => console.log(`Example app listening at http://okbros.pl:${port}`))
