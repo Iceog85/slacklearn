@@ -76,3 +76,8 @@ function sendMessageToSlackResponseURL(responseURL, JSONmessage){
       }
   })
 }
+
+(async () => {
+  const server = await slackEvents.start(port);
+  console.log(`Listening for events on ${server.address().port}`);
+})();
