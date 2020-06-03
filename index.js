@@ -1,50 +1,78 @@
 require('dotenv').config();
-const { createServer } = require('http');
 const express = require('express');
+const request = require('request');
 const bodyParser = require('body-parser');
-const { createEventAdapter } = require('@slack/events-api');
-const port = process.env.PORT || 28410;
-
-const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
-const slackEvents = createEventAdapter(slackSigningSecret);
-// Create an express application
 const app = express();
-
-// Plug the adapter in as a middleware
-app.use('/slack/events', slackEvents.requestListener());
-
-// Example: If you're using a body parser, always put it after the event adapter in the middleware stack
-app.use(bodyParser());
-
-slackEvents.on('message', (event) => {
-  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
-});
-
-slackEvents.on('app_mention', (event) => {
-  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
-  slackEvents.message
-
-});
-
-slackEvents.on('message', (message, body) => {
-  // Only deal with messages that have no subtype (plain messages) and contain 'hi'
-  if (!message.subtype && message.text.indexOf('hi') >= 0) {
-
-
-    (async () => {
-      try {
-        // Respond to the message back in the same channel
-        const response = await chat.postMessage({ channel: message.channel, text: `Hello <@${message.user}>! :tada:` });
-      } catch (error) {
-        console.log(error.data);
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
+app.post('/slack/commands/send-me-buttons', urlencodedParser, (req, res) =>{
+  res.status(200).end() // best practice to respond with empty 200 status code
+  var reqBody = req.body
+  var responseURL = reqBody.response_url
+  if (reqBody.token != process.env.VERIFICATION_TOKEN){
+      res.status(403).end("Access forbidden")
+  }else{
+      var message = {
+          "text": "This is your first interactive message",
+          "attachments": [
+              {
+                  "text": "Building buttons is easy right?",
+                  "fallback": "Shame... buttons aren't supported in this land",
+                  "callback_id": "button_tutorial",
+                  "color": "#3AA3E3",
+                  "attachment_type": "default",
+                  "actions": [
+                      {
+                          "name": "yes",
+                          "text": "yes",
+                          "type": "button",
+                          "value": "yes"
+                      },
+                      {
+                          "name": "no",
+                          "text": "no",
+                          "type": "button",
+                          "value": "no"
+                      },
+                      {
+                          "name": "maybe",
+                          "text": "maybe",
+                          "type": "button",
+                          "value": "maybe",
+                          "style": "danger"
+                      }
+                  ]
+              }
+          ]
       }
-    })();
+      sendMessageToSlackResponseURL(responseURL, message)
   }
-});
+})
 
 
-// Tworzenie serwera
-(async () => {
-  const server = await slackEvents.start(port);
-  console.log(`Listening for events on ${server.address().port}`);
-})();
+app.post('/slack/actions', urlencodedParser, (req, res) =>{
+  res.status(200).end() // best practice to respond with 200 status
+  var actionJSONPayload = JSON.parse(req.body.payload) // parse URL-encoded payload JSON string
+  var message = {
+      "text": actionJSONPayload.user.name+" clicked: "+actionJSONPayload.actions[0].name,
+      "replace_original": false
+  }
+  sendMessageToSlackResponseURL(actionJSONPayload.response_url, message)
+})
+
+
+
+function sendMessageToSlackResponseURL(responseURL, JSONmessage){
+  var postOptions = {
+      uri: responseURL,
+      method: 'POST',
+      headers: {
+          'Content-type': 'application/json'
+      },
+      json: JSONmessage
+  }
+  request(postOptions, (error, response, body) => {
+      if (error){
+          // handle errors as you see fit
+      }
+  })
+}
