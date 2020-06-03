@@ -1,29 +1,33 @@
 require('dotenv').config();
-const { App } = require('@slack/bolt');
+const { createServer } = require('http');
+const express = require('express');
+const bodyParser = require('body-parser');
+const { createEventAdapter } = require('@slack/events-api');
+const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
+const port = process.env.PORT || 28410;
+const slackEvents = createEventAdapter(slackSigningSecret);
 
-const bot = new App({
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
-  token: process.env.SLACK_BOT_TOKEN,
+// Create an express application
+const app = express();
+
+// Plug the adapter in as a middleware
+app.use('/my/path', slackEvents.requestListener());
+
+// Example: If you're using a body parser, always put it after the event adapter in the middleware stack
+app.use(bodyParser());
+
+// Initialize a server for the express app - you can skip this and the rest if you prefer to use app.listen()
+const server = createServer(app);
+server.listen(port, () => {
+  // Log a message when the server is ready
+  console.log(`Listening for events on ${server.address().port}`);
+});
+
+slackEvents.on('message', (event) => {
+  console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
 });
 
 (async () => {
-  // Start the app
-  await bot.start(process.env.PORT || 28410);
-
-  console.log(' Bolt app is running!');
+  const server = await slackEvents.start(port);
+  console.log(`Listening for events on ${server.address().port}`);
 })();
-
-bot.event("app_mention", async ({ context, event }) => {
-
-    try{
-      await bot.client.chat.postMessage({
-      token: context.botToken,
-      channel: event.channel,
-      text: `Hey yoo <@${event.user}> you mentioned me`
-    });
-    }
-    catch (e) {
-      console.log(`error responding ${e}`);
-    }
-  
-  });
