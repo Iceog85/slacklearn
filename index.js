@@ -6,7 +6,7 @@ const app = express();
 const port = process.env.PORT;
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 app.post('/slack/commands/send-me-buttons', urlencodedParser, (req, res) =>{
-  res.status(302).end() // best practice to respond with empty 200 status code
+  //res.status(200).end() // best practice to respond with empty 200 status code
   var reqBody = req.body
   var responseURL = reqBody.response_url
   if (reqBody.token != process.env.VERIFICATION_TOKEN){
