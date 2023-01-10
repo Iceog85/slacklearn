@@ -9,7 +9,7 @@
   "author": "TO",
   "license": "ISC",
   "dependencies": {
-    "@slack/bolt": "^2.1.1",
+    "@slack/bolt": "^3.12.2",
     "@slack/events-api": "^2.3.3",
     "@slack/interactive-messages": "^1.6.0",
     "axios": "^0.19.2",
